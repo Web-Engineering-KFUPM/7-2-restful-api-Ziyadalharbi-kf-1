@@ -17,56 +17,84 @@ app.use(express.json());
 // Connect to MongoDB
 await connectDB(process.env.MONGO_URL);
 
-
-// ✅ GET all songs (READ)
+// GET all songs (READ) - newest first
 app.get("/api/songs", async (req, res) => {
   try {
-    const songs = await Song.find();
+    const songs = await Song.find().sort({ createdAt: -1 });
     res.json(songs);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
-// ✅ POST new song (CREATE)
-app.post("/api/songs", async (req, res) => {
+// GET one song by id
+app.get("/api/songs/:id", async (req, res) => {
   try {
-    const newSong = await Song.create(req.body);
-    res.status(201).json(newSong);
+    const song = await Song.findById(req.params.id);
+
+    if (!song) {
+      return res.status(404).json({ error: "Song not found" });
+    }
+
+    res.json(song);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// POST new song (CREATE)
+app.post("/api/songs", async (req, res) => {
+  try {
+    const { title, artist, year } = req.body;
 
-// ✅ PUT update song (UPDATE)
+    const newSong = await Song.create({
+      title,
+      artist,
+      year,
+    });
+
+    res.status(201).json(newSong);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// PUT update song (UPDATE)
 app.put("/api/songs/:id", async (req, res) => {
   try {
+    const { title, artist, year } = req.body;
+
     const updatedSong = await Song.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      { title, artist, year },
+      { new: true, runValidators: true }
     );
+
+    if (!updatedSong) {
+      return res.status(404).json({ error: "Song not found" });
+    }
 
     res.json(updatedSong);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
-
-// ✅ DELETE song (DELETE)
+// DELETE song (DELETE)
 app.delete("/api/songs/:id", async (req, res) => {
   try {
-    await Song.findByIdAndDelete(req.params.id);
-    res.json({ message: "Song deleted successfully" });
+    const deletedSong = await Song.findByIdAndDelete(req.params.id);
+
+    if (!deletedSong) {
+      return res.status(404).json({ error: "Song not found" });
+    }
+
+    res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
-app.listen(PORT, () => 
-  console.log(`API running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`API running on http://localhost:${PORT}`);
+});
