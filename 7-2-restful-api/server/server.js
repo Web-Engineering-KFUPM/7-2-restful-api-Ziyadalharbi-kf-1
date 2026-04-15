@@ -13,10 +13,10 @@ const PORT = process.env.PORT || 5174;
 app.use(cors());
 app.use(express.json());
 
-// Connect DB
+// Connect to MongoDB
 await connectDB(process.env.MONGO_URL);
 
-// ✅ GET all songs (newest first)
+// GET all songs
 app.get("/api/songs", async (req, res) => {
   try {
     const songs = await Song.find().sort({ createdAt: -1 });
@@ -26,22 +26,22 @@ app.get("/api/songs", async (req, res) => {
   }
 });
 
-// ✅ GET single song (with 404)
+// GET song by ID
 app.get("/api/songs/:id", async (req, res) => {
   try {
     const song = await Song.findById(req.params.id);
 
-    if (!song) {
+    if (song === null) {
       return res.status(404).json({ error: "Song not found" });
     }
 
     res.json(song);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(404).json({ error: "Song not found" });
   }
 });
 
-// ✅ POST create song (uses title & artist, 400 on error)
+// POST new song
 app.post("/api/songs", async (req, res) => {
   try {
     const { title, artist, year } = req.body;
@@ -58,43 +58,42 @@ app.post("/api/songs", async (req, res) => {
   }
 });
 
-// PUT /api/songs/:id
+// PUT update song
 app.put("/api/songs/:id", async (req, res) => {
   try {
-    const existingSong = await Song.findById(req.params.id);
+    const song = await Song.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
-    if (!existingSong) {
+    if (song === null) {
       return res.status(404).json({ error: "Song not found" });
     }
 
-    const updatedSong = await Song.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    return res.json(updatedSong);
+    res.json(song);
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(404).json({ error: "Song not found" });
   }
 });
 
-// DELETE /api/songs/:id
+// DELETE song
 app.delete("/api/songs/:id", async (req, res) => {
   try {
-    const existingSong = await Song.findById(req.params.id);
+    const song = await Song.findByIdAndDelete(req.params.id);
 
-    if (!existingSong) {
+    if (song === null) {
       return res.status(404).json({ error: "Song not found" });
     }
 
-    await Song.findByIdAndDelete(req.params.id);
-
-    return res.sendStatus(204);
+    res.status(204).send();
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(404).json({ error: "Song not found" });
   }
-}); 
+});
 
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
