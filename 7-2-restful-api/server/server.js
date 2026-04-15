@@ -58,40 +58,44 @@ app.post("/api/songs", async (req, res) => {
   }
 });
 
-// ✅ PUT update song
+// PUT /api/songs/:id
 app.put("/api/songs/:id", async (req, res) => {
   try {
-    const song = await Song.findByIdAndUpdate(
+    const existingSong = await Song.findById(req.params.id);
+
+    if (!existingSong) {
+      return res.status(404).json({ error: "Song not found" });
+    }
+
+    const updatedSong = await Song.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
 
-    if (!song) {
-      return res.status(404).send("Song not found");
-    }
-
-    return res.status(200).json(song);
+    return res.json(updatedSong);
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }
 });
 
-
-// ✅ DELETE song
+// DELETE /api/songs/:id
 app.delete("/api/songs/:id", async (req, res) => {
   try {
-    const song = await Song.findByIdAndDelete(req.params.id);
+    const existingSong = await Song.findById(req.params.id);
 
-    if (!song) {
-      return res.status(404).send("Song not found");
+    if (!existingSong) {
+      return res.status(404).json({ error: "Song not found" });
     }
+
+    await Song.findByIdAndDelete(req.params.id);
 
     return res.sendStatus(204);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-});
+}); 
+
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
