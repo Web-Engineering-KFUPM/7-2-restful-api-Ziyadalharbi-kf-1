@@ -58,36 +58,31 @@ app.post("/api/songs", async (req, res) => {
   }
 });
 
-// ✅ PUT update song (validators + 404)
+// ✅ PUT update song
 app.put("/api/songs/:id", async (req, res) => {
   try {
-    const { title, artist, year } = req.body;
-
     const updatedSong = await Song.findByIdAndUpdate(
       req.params.id,
-      { title, artist, year },
-      {
-        new: true,
-        runValidators: true,
-      }
+      req.body,
+      { new: true, runValidators: true }
     );
 
-    if (!updatedSong) {
+    if (updatedSong === null) {
       return res.status(404).json({ error: "Song not found" });
     }
 
     res.json(updatedSong);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ DELETE song (404 + 204)
+// ✅ DELETE song
 app.delete("/api/songs/:id", async (req, res) => {
   try {
     const deletedSong = await Song.findByIdAndDelete(req.params.id);
 
-    if (!deletedSong) {
+    if (deletedSong === null) {
       return res.status(404).json({ error: "Song not found" });
     }
 
