@@ -1,28 +1,72 @@
 import express from "express";
 import cors from "cors";
-
-// import dotenv and load environment variables from .env
-
+import dotenv from "dotenv";
 
 import { connectDB } from "./db.js";
 import { Song } from "./models/song.model.js";
 
+// Load environment variables
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5174;
 
-app.use(cors());              
+app.use(cors());
 app.use(express.json());
 
+// Connect to MongoDB
 await connectDB(process.env.MONGO_URL);
 
-// api/songs (Read all songs)
+
+// ✅ GET all songs (READ)
+app.get("/api/songs", async (req, res) => {
+  try {
+    const songs = await Song.find();
+    res.json(songs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
-// api/songs (Insert song)
+// ✅ POST new song (CREATE)
+app.post("/api/songs", async (req, res) => {
+  try {
+    const newSong = await Song.create(req.body);
+    res.status(201).json(newSong);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-// /api/songs/:id (Update song)
+
+// ✅ PUT update song (UPDATE)
+app.put("/api/songs/:id", async (req, res) => {
+  try {
+    const updatedSong = await Song.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json(updatedSong);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
-// /api/songs/:id (Delete song)
+// ✅ DELETE song (DELETE)
+app.delete("/api/songs/:id", async (req, res) => {
+  try {
+    await Song.findByIdAndDelete(req.params.id);
+    res.json({ message: "Song deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+
+app.listen(PORT, () => 
+  console.log(`API running on http://localhost:${PORT}`)
+);
