@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 import { connectDB } from "./db.js";
 import { Song } from "./models/song.model.js";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -14,10 +13,10 @@ const PORT = process.env.PORT || 5174;
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
+// Connect DB
 await connectDB(process.env.MONGO_URL);
 
-// GET all songs (READ) - newest first
+// ✅ GET all songs (newest first)
 app.get("/api/songs", async (req, res) => {
   try {
     const songs = await Song.find().sort({ createdAt: -1 });
@@ -27,7 +26,7 @@ app.get("/api/songs", async (req, res) => {
   }
 });
 
-// GET one song by id
+// ✅ GET single song (with 404)
 app.get("/api/songs/:id", async (req, res) => {
   try {
     const song = await Song.findById(req.params.id);
@@ -42,7 +41,7 @@ app.get("/api/songs/:id", async (req, res) => {
   }
 });
 
-// POST new song (CREATE)
+// ✅ POST create song (uses title & artist, 400 on error)
 app.post("/api/songs", async (req, res) => {
   try {
     const { title, artist, year } = req.body;
@@ -59,7 +58,7 @@ app.post("/api/songs", async (req, res) => {
   }
 });
 
-// PUT update song (UPDATE)
+// ✅ PUT update song (validators + 404)
 app.put("/api/songs/:id", async (req, res) => {
   try {
     const { title, artist, year } = req.body;
@@ -67,7 +66,10 @@ app.put("/api/songs/:id", async (req, res) => {
     const updatedSong = await Song.findByIdAndUpdate(
       req.params.id,
       { title, artist, year },
-      { new: true, runValidators: true }
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
     if (!updatedSong) {
@@ -80,7 +82,7 @@ app.put("/api/songs/:id", async (req, res) => {
   }
 });
 
-// DELETE song (DELETE)
+// ✅ DELETE song (404 + 204)
 app.delete("/api/songs/:id", async (req, res) => {
   try {
     const deletedSong = await Song.findByIdAndDelete(req.params.id);
