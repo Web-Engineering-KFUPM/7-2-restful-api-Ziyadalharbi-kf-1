@@ -61,37 +61,37 @@ app.post("/api/songs", async (req, res) => {
 // ✅ PUT update song
 app.put("/api/songs/:id", async (req, res) => {
   try {
-    const updatedSong = await Song.findByIdAndUpdate(
+    const song = await Song.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
 
-    if (updatedSong === null) {
-      return res.status(404).json({ error: "Song not found" });
+    if (!song) {
+      return res.status(404).send("Song not found");
     }
 
-    res.json(updatedSong);
+    return res.status(200).json(song);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 });
+
 
 // ✅ DELETE song
 app.delete("/api/songs/:id", async (req, res) => {
   try {
-    const deletedSong = await Song.findByIdAndDelete(req.params.id);
+    const song = await Song.findByIdAndDelete(req.params.id);
 
-    if (deletedSong === null) {
-      return res.status(404).json({ error: "Song not found" });
+    if (!song) {
+      return res.status(404).send("Song not found");
     }
 
-    res.status(204).send();
+    return res.sendStatus(204);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
-
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
